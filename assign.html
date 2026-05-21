@@ -2,6 +2,69 @@
 
 {% block title %}Assign Locker - Locker Tracker{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Better visibility for detail boxes */
+    .detail-box {
+        background: rgba(77, 184, 255, 0.15);
+        border: 1px solid #4db8ff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .detail-box p {
+        margin-bottom: 8px;
+        color: #ffffff !important;
+        font-size: 1rem;
+    }
+    
+    .detail-box .label {
+        color: #4db8ff !important;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+    
+    .detail-box .value {
+        color: #ffffff !important;
+        font-weight: 500;
+    }
+    
+    .search-results {
+        background: #1e2a3a;
+        border: 1px solid #4db8ff;
+        border-radius: 5px;
+        max-height: 250px;
+        overflow-y: auto;
+        margin-top: 5px;
+    }
+    
+    .search-item {
+        padding: 12px;
+        border-bottom: 1px solid #3a5068;
+        cursor: pointer;
+        color: #ffffff;
+        transition: background 0.2s;
+    }
+    
+    .search-item:hover {
+        background: rgba(77, 184, 255, 0.2);
+    }
+    
+    .search-item:last-child {
+        border-bottom: none;
+    }
+    
+    .search-item strong {
+        color: #4db8ff;
+    }
+    
+    .search-item small {
+        color: #8fa8c0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-lg-12">
@@ -12,91 +75,92 @@
 </div>
 
 <div class="row">
-    <div class="col-lg-8 offset-lg-2">
+    <div class="col-lg-10 offset-lg-1">
         <div class="card">
             <div class="card-body">
-                <form id="assignForm">
-                    <!-- Locker Selection -->
-                    <div class="mb-4">
-                        <h5 style="color: #4db8ff; margin-bottom: 15px;">
-                            <i class="bi bi-door-open"></i> Select Locker
-                        </h5>
-                        <label class="form-label">Locker Number</label>
-                        <select class="form-select" id="lockerSelect" required>
-                            <option value="">-- Select Locker --</option>
-                        </select>
-                        <small class="text-muted">Only available lockers are shown</small>
-                    </div>
+                <!-- Locker Selection -->
+                <div class="mb-4">
+                    <h5 style="color: #4db8ff; margin-bottom: 15px;">
+                        <i class="bi bi-door-open"></i> Select Locker
+                    </h5>
+                    <label class="form-label" style="color: #ffffff;">Locker Number</label>
+                    <select class="form-select" id="lockerSelect">
+                        <option value="">-- Select Locker --</option>
+                    </select>
+                    <small style="color: #8fa8c0;">Only available lockers are shown</small>
+                </div>
 
-                    <!-- Locker Details -->
-                    <div class="row mb-4" id="lockerDetails" style="display: none;">
+                <!-- Locker Details -->
+                <div id="lockerDetails" style="display: none;">
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
-                                <p><strong style="color: #4db8ff;">Type:</strong> <span id="lockerType">-</span></p>
-                                <p><strong style="color: #4db8ff;">Floor:</strong> <span id="lockerFloor">-</span></p>
+                            <div class="detail-box">
+                                <p><span class="label">Type:</span> <span class="value" id="lockerType">-</span></p>
+                                <p><span class="label">Floor:</span> <span class="value" id="lockerFloor">-</span></p>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
-                                <p><strong style="color: #4db8ff;">Bay:</strong> <span id="lockerBay">-</span></p>
-                                <p><strong style="color: #4db8ff;">Keys Available:</strong> <span id="keysAvailable">-</span></p>
+                            <div class="detail-box">
+                                <p><span class="label">Bay:</span> <span class="value" id="lockerBay">-</span></p>
+                                <p><span class="label">Status:</span> <span class="value" id="lockerStatus">Available</span></p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Employee Selection -->
-                    <div class="mb-4">
-                        <h5 style="color: #4db8ff; margin-bottom: 15px;">
-                            <i class="bi bi-person"></i> Select Employee
-                        </h5>
-                        <label class="form-label">Employee ID / Name</label>
-                        <input type="text" class="form-control" id="empSearch" 
-                               placeholder="Search by ID, name or email...">
-                        <select class="form-select" id="employeeSelect" style="display: none;" required>
-                            <option value="">-- Select Employee --</option>
-                        </select>
-                        <div id="empSearchResults" style="display: none; background: rgba(77, 184, 255, 0.05); 
-                             border: 1px solid #4db8ff; border-radius: 5px; max-height: 200px; overflow-y: auto;"></div>
-                    </div>
+                <!-- Employee Selection -->
+                <div class="mb-4">
+                    <h5 style="color: #4db8ff; margin-bottom: 15px;">
+                        <i class="bi bi-person"></i> Select Employee
+                    </h5>
+                    <label class="form-label" style="color: #ffffff;">Search Employee</label>
+                    <input type="text" class="form-control" id="empSearch" 
+                           placeholder="Search by ID, name or email..." autocomplete="off">
+                    <div id="empSearchResults" class="search-results" style="display: none;"></div>
+                </div>
 
-                    <!-- Employee Details -->
-                    <div class="row mb-4" id="employeeDetails" style="display: none;">
+                <!-- Employee Details -->
+                <div id="employeeDetails" style="display: none;">
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
-                                <p><strong style="color: #4db8ff;">Name:</strong> <span id="empName">-</span></p>
-                                <p><strong style="color: #4db8ff;">Designation:</strong> <span id="empDesignation">-</span></p>
+                            <div class="detail-box">
+                                <p><span class="label">Name:</span> <span class="value" id="empName">-</span></p>
+                                <p><span class="label">Designation:</span> <span class="value" id="empDesignation">-</span></p>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
-                                <p><strong style="color: #4db8ff;">Department:</strong> <span id="empDept">-</span></p>
-                                <p><strong style="color: #4db8ff;">Email:</strong> <span id="empEmail">-</span></p>
+                            <div class="detail-box">
+                                <p><span class="label">Department:</span> <span class="value" id="empDept">-</span></p>
+                                <p><span class="label">Email:</span> <span class="value" id="empEmail">-</span></p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Keys to Issue -->
-                    <div class="mb-4">
-                        <label class="form-label">Keys to Issue</label>
-                        <input type="number" class="form-control" id="keysToIssue" 
-                               value="1" min="1" max="5" required>
-                    </div>
+                <!-- Keys to Issue -->
+                <div class="mb-4">
+                    <label class="form-label" style="color: #ffffff;">Keys to Issue</label>
+                    <input type="number" class="form-control" id="keysToIssue" 
+                           value="1" min="1" max="5">
+                </div>
 
-                    <!-- Remarks -->
-                    <div class="mb-4">
-                        <label class="form-label">Remarks (Optional)</label>
-                        <textarea class="form-control" id="remarks" rows="3" 
-                                  placeholder="Add any remarks..."></textarea>
-                    </div>
+                <!-- Remarks -->
+                <div class="mb-4">
+                    <label class="form-label" style="color: #ffffff;">Remarks (Optional)</label>
+                    <textarea class="form-control" id="remarks" rows="3" 
+                              placeholder="Add any remarks..."></textarea>
+                </div>
 
-                    <!-- Buttons -->
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Assign Locker
-                        </button>
-                        <a href="/" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
+                <!-- Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="button" id="assignBtn" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle"></i> Assign Locker
+                    </button>
+                    <a href="/" class="btn btn-secondary btn-lg">Cancel</a>
+                </div>
+                
+                <!-- Status Message -->
+                <div id="statusMessage" class="mt-3" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -104,6 +168,7 @@
 
 <script>
 let selectedEmpId = '';
+let selectedEmpName = '';
 
 // Load available lockers
 async function loadLockers() {
@@ -120,8 +185,10 @@ async function loadLockers() {
             option.textContent = `${locker.locker_no} - ${locker.type_name} (${locker.floor_name})`;
             select.appendChild(option);
         });
+        
+        console.log(`Loaded ${lockers.length} available lockers`);
     } catch (error) {
-        showAlert('Failed to load lockers: ' + error.message, 'danger');
+        showStatus('Failed to load lockers: ' + error.message, 'danger');
     }
 }
 
@@ -137,102 +204,166 @@ document.getElementById('lockerSelect').addEventListener('change', async (e) => 
         const response = await fetch(`/api/locker/${lockerNo}`);
         const locker = await response.json();
         
-        document.getElementById('lockerType').textContent = locker.type_name;
-        document.getElementById('lockerFloor').textContent = locker.floor_name;
-        document.getElementById('lockerBay').textContent = locker.bay_no;
-        document.getElementById('keysAvailable').textContent = locker.keys_available;
+        document.getElementById('lockerType').textContent = locker.type_name || '-';
+        document.getElementById('lockerFloor').textContent = locker.floor_name || '-';
+        document.getElementById('lockerBay').textContent = locker.bay_no || '-';
+        document.getElementById('lockerStatus').textContent = locker.status || 'Available';
         document.getElementById('lockerDetails').style.display = 'block';
     } catch (error) {
-        showAlert('Failed to load locker details: ' + error.message, 'danger');
+        showStatus('Failed to load locker details: ' + error.message, 'danger');
     }
 });
 
-// Employee search
-let employeeList = [];
-
-document.getElementById('empSearch').addEventListener('input', async (e) => {
+// Employee search with debounce
+let searchTimeout;
+document.getElementById('empSearch').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
     const search = e.target.value.trim();
+    
     if (search.length < 1) {
         document.getElementById('empSearchResults').style.display = 'none';
         return;
     }
     
+    searchTimeout = setTimeout(() => searchEmployees(search), 300);
+});
+
+async function searchEmployees(search) {
     try {
         const response = await fetch(`/api/employees/search?q=${encodeURIComponent(search)}`);
-        employeeList = await response.json();
+        const employees = await response.json();
         
         const resultsDiv = document.getElementById('empSearchResults');
         resultsDiv.innerHTML = '';
         
-        employeeList.forEach(emp => {
-            const div = document.createElement('div');
-            div.style.cssText = 'padding: 10px; border-bottom: 1px solid #3a5068; cursor: pointer; transition: background 0.3s;';
-            div.innerHTML = `
-                <strong>${emp.emp_id}</strong> - ${emp.emp_name}
-                <br>
-                <small style="color: #8fa8c0;">${emp.dept_name} | ${emp.email}</small>
-            `;
-            div.addEventListener('mouseover', () => div.style.background = 'rgba(77, 184, 255, 0.1)');
-            div.addEventListener('mouseout', () => div.style.background = 'transparent');
-            div.addEventListener('click', () => selectEmployee(emp));
-            resultsDiv.appendChild(div);
-        });
+        if (employees.length === 0) {
+            resultsDiv.innerHTML = '<div class="search-item">No employees found</div>';
+        } else {
+            employees.forEach(emp => {
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `
+                    <strong>${emp.emp_id}</strong> - ${emp.emp_name}<br>
+                    <small>${emp.dept_name || ''} | ${emp.email || ''}</small>
+                `;
+                // Use both click and touch for mobile compatibility
+                div.addEventListener('click', () => selectEmployee(emp));
+                div.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    selectEmployee(emp);
+                });
+                resultsDiv.appendChild(div);
+            });
+        }
         
         resultsDiv.style.display = 'block';
     } catch (error) {
-        showAlert('Failed to search employees: ' + error.message, 'danger');
+        showStatus('Failed to search employees: ' + error.message, 'danger');
     }
-});
+}
 
 function selectEmployee(emp) {
     selectedEmpId = emp.emp_id;
+    selectedEmpName = emp.emp_name;
+    
     document.getElementById('empSearch').value = `${emp.emp_id} - ${emp.emp_name}`;
     document.getElementById('empSearchResults').style.display = 'none';
     
-    document.getElementById('empName').textContent = emp.emp_name;
+    document.getElementById('empName').textContent = emp.emp_name || '-';
     document.getElementById('empDesignation').textContent = emp.designation || '-';
     document.getElementById('empDept').textContent = emp.dept_name || '-';
     document.getElementById('empEmail').textContent = emp.email || '-';
     document.getElementById('employeeDetails').style.display = 'block';
+    
+    console.log('Employee selected:', selectedEmpId);
 }
 
-// Form submission
-document.getElementById('assignForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// Show status message
+function showStatus(message, type) {
+    const statusDiv = document.getElementById('statusMessage');
+    statusDiv.className = `alert alert-${type}`;
+    statusDiv.textContent = message;
+    statusDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Assign button click handler
+document.getElementById('assignBtn').addEventListener('click', async () => {
+    console.log('Assign button clicked!');
     
     const lockerNo = document.getElementById('lockerSelect').value;
+    const keysToIssue = document.getElementById('keysToIssue').value;
+    const remarks = document.getElementById('remarks').value;
+    
+    // Validation
     if (!lockerNo) {
-        showAlert('Please select a locker', 'warning');
+        showStatus('⚠️ Please select a locker', 'warning');
+        document.getElementById('lockerSelect').focus();
         return;
     }
     
     if (!selectedEmpId) {
-        showAlert('Please select an employee', 'warning');
+        showStatus('⚠️ Please select an employee', 'warning');
+        document.getElementById('empSearch').focus();
         return;
     }
     
+    if (!keysToIssue || keysToIssue < 1) {
+        showStatus('⚠️ Please enter valid number of keys', 'warning');
+        return;
+    }
+    
+    // Disable button to prevent double-click
+    const btn = document.getElementById('assignBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Assigning...';
+    
     try {
+        console.log('Sending assign request:', { lockerNo, selectedEmpId, keysToIssue });
+        
         const response = await fetch('/api/locker/assign', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify({
                 locker_no: lockerNo,
                 emp_id: selectedEmpId,
-                keys_to_issue: document.getElementById('keysToIssue').value,
-                remarks: document.getElementById('remarks').value
+                keys_to_issue: parseInt(keysToIssue),
+                remarks: remarks
             })
         });
         
         const data = await response.json();
+        console.log('Server response:', data);
         
-        if (response.ok) {
-            showAlert(data.message, 'success');
-            setTimeout(() => location.href = '/', 2000);
+        if (response.ok && data.success) {
+            showStatus('✅ ' + data.message, 'success');
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 2000);
         } else {
-            showAlert(data.error || 'Failed to assign locker', 'danger');
+            showStatus('❌ ' + (data.error || 'Failed to assign locker'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Assign Locker';
         }
     } catch (error) {
-        showAlert('Error: ' + error.message, 'danger');
+        console.error('Assign error:', error);
+        showStatus('❌ Error: ' + error.message, 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Assign Locker';
+    }
+});
+
+// Close search results when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#empSearch') && !e.target.closest('#empSearchResults')) {
+        document.getElementById('empSearchResults').style.display = 'none';
     }
 });
 
