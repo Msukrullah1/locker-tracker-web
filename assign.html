@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Locker - Locker Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <h2 style="color: #4db8ff; margin-bottom: 20px;">
+            <i class="bi bi-plus-square"></i> Assign Locker to Employee
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="card">
+            <div class="card-body">
+                <form id="assignForm">
+                    <!-- Locker Selection -->
+                    <div class="mb-4">
+                        <h5 style="color: #4db8ff; margin-bottom: 15px;">
+                            <i class="bi bi-door-open"></i> Select Locker
+                        </h5>
+                        <label class="form-label">Locker Number</label>
+                        <select class="form-select" id="lockerSelect" required>
+                            <option value="">-- Select Locker --</option>
+                        </select>
+                        <small class="text-muted">Only available lockers are shown</small>
+                    </div>
+
+                    <!-- Locker Details -->
+                    <div class="row mb-4" id="lockerDetails" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
+                                <p><strong style="color: #4db8ff;">Type:</strong> <span id="lockerType">-</span></p>
+                                <p><strong style="color: #4db8ff;">Floor:</strong> <span id="lockerFloor">-</span></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
+                                <p><strong style="color: #4db8ff;">Bay:</strong> <span id="lockerBay">-</span></p>
+                                <p><strong style="color: #4db8ff;">Keys Available:</strong> <span id="keysAvailable">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employee Selection -->
+                    <div class="mb-4">
+                        <h5 style="color: #4db8ff; margin-bottom: 15px;">
+                            <i class="bi bi-person"></i> Select Employee
+                        </h5>
+                        <label class="form-label">Employee ID / Name</label>
+                        <input type="text" class="form-control" id="empSearch" 
+                               placeholder="Search by ID, name or email...">
+                        <select class="form-select" id="employeeSelect" style="display: none;" required>
+                            <option value="">-- Select Employee --</option>
+                        </select>
+                        <div id="empSearchResults" style="display: none; background: rgba(77, 184, 255, 0.05); 
+                             border: 1px solid #4db8ff; border-radius: 5px; max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+
+                    <!-- Employee Details -->
+                    <div class="row mb-4" id="employeeDetails" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
+                                <p><strong style="color: #4db8ff;">Name:</strong> <span id="empName">-</span></p>
+                                <p><strong style="color: #4db8ff;">Designation:</strong> <span id="empDesignation">-</span></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
+                                <p><strong style="color: #4db8ff;">Department:</strong> <span id="empDept">-</span></p>
+                                <p><strong style="color: #4db8ff;">Email:</strong> <span id="empEmail">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Keys to Issue -->
+                    <div class="mb-4">
+                        <label class="form-label">Keys to Issue</label>
+                        <input type="number" class="form-control" id="keysToIssue" 
+                               value="1" min="1" max="5" required>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="mb-4">
+                        <label class="form-label">Remarks (Optional)</label>
+                        <textarea class="form-control" id="remarks" rows="3" 
+                                  placeholder="Add any remarks..."></textarea>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Assign Locker
+                        </button>
+                        <a href="/" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedEmpId = '';
+
+// Load available lockers
+async function loadLockers() {
+    try {
+        const response = await fetch('/api/lockers/available');
+        const lockers = await response.json();
+        
+        const select = document.getElementById('lockerSelect');
+        select.innerHTML = '<option value="">-- Select Locker --</option>';
+        
+        lockers.forEach(locker => {
+            const option = document.createElement('option');
+            option.value = locker.locker_no;
+            option.textContent = `${locker.locker_no} - ${locker.type_name} (${locker.floor_name})`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        showAlert('Failed to load lockers: ' + error.message, 'danger');
+    }
+}
+
+// Handle locker selection
+document.getElementById('lockerSelect').addEventListener('change', async (e) => {
+    const lockerNo = e.target.value;
+    if (!lockerNo) {
+        document.getElementById('lockerDetails').style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/locker/${lockerNo}`);
+        const locker = await response.json();
+        
+        document.getElementById('lockerType').textContent = locker.type_name;
+        document.getElementById('lockerFloor').textContent = locker.floor_name;
+        document.getElementById('lockerBay').textContent = locker.bay_no;
+        document.getElementById('keysAvailable').textContent = locker.keys_available;
+        document.getElementById('lockerDetails').style.display = 'block';
+    } catch (error) {
+        showAlert('Failed to load locker details: ' + error.message, 'danger');
+    }
+});
+
+// Employee search
+let employeeList = [];
+
+document.getElementById('empSearch').addEventListener('input', async (e) => {
+    const search = e.target.value.trim();
+    if (search.length < 1) {
+        document.getElementById('empSearchResults').style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/employees/search?q=${encodeURIComponent(search)}`);
+        employeeList = await response.json();
+        
+        const resultsDiv = document.getElementById('empSearchResults');
+        resultsDiv.innerHTML = '';
+        
+        employeeList.forEach(emp => {
+            const div = document.createElement('div');
+            div.style.cssText = 'padding: 10px; border-bottom: 1px solid #3a5068; cursor: pointer; transition: background 0.3s;';
+            div.innerHTML = `
+                <strong>${emp.emp_id}</strong> - ${emp.emp_name}
+                <br>
+                <small style="color: #8fa8c0;">${emp.dept_name} | ${emp.email}</small>
+            `;
+            div.addEventListener('mouseover', () => div.style.background = 'rgba(77, 184, 255, 0.1)');
+            div.addEventListener('mouseout', () => div.style.background = 'transparent');
+            div.addEventListener('click', () => selectEmployee(emp));
+            resultsDiv.appendChild(div);
+        });
+        
+        resultsDiv.style.display = 'block';
+    } catch (error) {
+        showAlert('Failed to search employees: ' + error.message, 'danger');
+    }
+});
+
+function selectEmployee(emp) {
+    selectedEmpId = emp.emp_id;
+    document.getElementById('empSearch').value = `${emp.emp_id} - ${emp.emp_name}`;
+    document.getElementById('empSearchResults').style.display = 'none';
+    
+    document.getElementById('empName').textContent = emp.emp_name;
+    document.getElementById('empDesignation').textContent = emp.designation || '-';
+    document.getElementById('empDept').textContent = emp.dept_name || '-';
+    document.getElementById('empEmail').textContent = emp.email || '-';
+    document.getElementById('employeeDetails').style.display = 'block';
+}
+
+// Form submission
+document.getElementById('assignForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const lockerNo = document.getElementById('lockerSelect').value;
+    if (!lockerNo) {
+        showAlert('Please select a locker', 'warning');
+        return;
+    }
+    
+    if (!selectedEmpId) {
+        showAlert('Please select an employee', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/locker/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                locker_no: lockerNo,
+                emp_id: selectedEmpId,
+                keys_to_issue: document.getElementById('keysToIssue').value,
+                remarks: document.getElementById('remarks').value
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showAlert(data.message, 'success');
+            setTimeout(() => location.href = '/', 2000);
+        } else {
+            showAlert(data.error || 'Failed to assign locker', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+
+// Load lockers on page load
+loadLockers();
+</script>
+{% endblock %}

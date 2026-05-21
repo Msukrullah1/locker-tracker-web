@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Locker Tracker{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4db8ff;
+            --dark: #1e2a3a;
+            --dark-secondary: #253447;
+            --text-light: #8fa8c0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e2a3a 0%, #253447 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: var(--dark-secondary) !important;
+            border-bottom: 2px solid var(--primary);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary) !important;
+        }
+        
+        .nav-link {
+            color: var(--text-light) !important;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary) !important;
+        }
+        
+        .nav-link.active {
+            color: var(--primary) !important;
+        }
+        
+        .sidebar {
+            background: var(--dark-secondary);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 56px;
+            width: 250px;
+            padding: 20px 0;
+            border-right: 2px solid var(--primary);
+            overflow-y: auto;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--text-light);
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: rgba(77, 184, 255, 0.1);
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .sidebar .nav-link.active {
+            background: rgba(77, 184, 255, 0.2);
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            margin-top: 56px;
+        }
+        
+        .card {
+            background: var(--dark-secondary);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-header {
+            background: rgba(77, 184, 255, 0.1);
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            color: var(--dark);
+            font-weight: bold;
+        }
+        
+        .btn-primary:hover {
+            background: #3aa0e0;
+            color: var(--dark);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: var(--dark);
+        }
+        
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--text-light);
+            color: white;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(77, 184, 255, 0.1);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 0 0 0.2rem rgba(77, 184, 255, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-light);
+            opacity: 0.7;
+        }
+        
+        .table {
+            color: white;
+        }
+        
+        .table thead th {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid var(--text-light);
+            transition: all 0.3s ease;
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(77, 184, 255, 0.1);
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background: #28a745;
+        }
+        
+        .badge-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .badge-danger {
+            background: #dc3545;
+        }
+        
+        .badge-info {
+            background: #17a2b8;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(77, 184, 255, 0.2) 0%, rgba(77, 184, 255, 0.05) 100%);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card h5 {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .stat-number {
+            color: var(--primary);
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            color: #ff6b6b;
+        }
+        
+        .alert-success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            color: #51cf66;
+        }
+        
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+            color: #ffd43b;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading-spinner.show {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                top: auto;
+                border-right: none;
+                border-bottom: 2px solid var(--primary);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                margin-top: 0;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                🔒 Locker Tracker
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="nav-link">👤 {{ user_name }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link text-muted text-capitalize">{{ user_role }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <nav class="nav flex-column">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="/assign" class="nav-link {% if request.path == '/assign' %}active{% endif %}">
+                <i class="bi bi-plus-square"></i> Assign Locker
+            </a>
+            <a href="/release" class="nav-link {% if request.path == '/release' %}active{% endif %}">
+                <i class="bi bi-minus-square"></i> Release Locker
+            </a>
+            <a href="/employees" class="nav-link {% if request.path == '/employees' %}active{% endif %}">
+                <i class="bi bi-search"></i> Employee Search
+            </a>
+            {% if user_role in ['SuperAdmin', 'Admin', 'Viewer'] %}
+            <a href="/reports" class="nav-link {% if request.path == '/reports' %}active{% endif %}">
+                <i class="bi bi-graph-up"></i> Reports
+            </a>
+            {% endif %}
+            {% if user_role in ['SuperAdmin', 'Admin'] %}
+            <a href="/audit" class="nav-link {% if request.path == '/audit' %}active{% endif %}">
+                <i class="bi bi-clipboard-check"></i> Audit Log
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Common functions
+        function showAlert(message, type = 'danger') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.main-content').prepend(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

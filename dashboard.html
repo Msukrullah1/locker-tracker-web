@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Locker Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <h2 style="color: #4db8ff; margin-bottom: 20px;">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h2>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <h5>Total Lockers</h5>
+            <div class="stat-number" id="total-lockers">{{ stats.total }}</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <h5>Assigned</h5>
+            <div class="stat-number" id="assigned-lockers">{{ stats.assigned }}</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <h5>Available</h5>
+            <div class="stat-number" id="available-lockers">{{ stats.available }}</div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <h5>Utilization</h5>
+            <div class="stat-number" id="utilization">{{ stats.utilization }}%</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <a href="/assign" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-plus-square"></i> Assign Locker
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/release" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-minus-square"></i> Release Locker
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/employees" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-search"></i> Search Employee
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activities</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Locker</th>
+                                <th>Employee</th>
+                                <th>Action</th>
+                                <th>Date</th>
+                                <th>Keys</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentActivity">
+                            {% for item in recent %}
+                            <tr>
+                                <td><strong>{{ item.locker_no }}</strong></td>
+                                <td>{{ item.emp_name }}</td>
+                                <td>
+                                    <span class="badge {% if item.action == 'ASSIGN' %}badge-success{% else %}badge-warning{% endif %}">
+                                        {{ item.action }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if item.action_date %}
+                                        {{ item.action_date.strftime('%d-%b-%y %H:%M') }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.keys_issued }}</td>
+                                <td>{{ item.remarks or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if not recent %}
+                <p class="text-center text-muted mt-4">No recent activities</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh dashboard every 30 seconds
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

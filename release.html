@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Release Locker - Locker Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <h2 style="color: #4db8ff; margin-bottom: 20px;">
+            <i class="bi bi-minus-square"></i> Release Locker
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="card">
+            <div class="card-body">
+                <form id="releaseForm">
+                    <!-- Locker Selection -->
+                    <div class="mb-4">
+                        <h5 style="color: #4db8ff; margin-bottom: 15px;">
+                            <i class="bi bi-door-open"></i> Select Locker to Release
+                        </h5>
+                        <label class="form-label">Locker Number</label>
+                        <select class="form-select" id="lockerSelect" required>
+                            <option value="">-- Select Locker --</option>
+                        </select>
+                        <small class="text-muted">Only assigned lockers are shown</small>
+                    </div>
+
+                    <!-- Current Assignment -->
+                    <div class="row mb-4" id="assignmentDetails" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
+                                <p><strong style="color: #4db8ff;">Employee:</strong> <span id="empName">-</span></p>
+                                <p><strong style="color: #4db8ff;">Emp ID:</strong> <span id="empId">-</span></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: rgba(77, 184, 255, 0.1); border-radius: 5px;">
+                                <p><strong style="color: #4db8ff;">Assigned Date:</strong> <span id="assignedDate">-</span></p>
+                                <p><strong style="color: #4db8ff;">Keys Issued:</strong> <span id="keysIssued">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Keys Returned -->
+                    <div class="mb-4">
+                        <label class="form-label">Keys Returned</label>
+                        <input type="number" class="form-control" id="keysReturned" 
+                               value="1" min="0" max="5" required>
+                    </div>
+
+                    <!-- Release Reason -->
+                    <div class="mb-4">
+                        <label class="form-label">Release Reason</label>
+                        <select class="form-select" id="releaseReason" required>
+                            <option value="">-- Select Reason --</option>
+                            <option value="Resignation">Resignation</option>
+                            <option value="Transfer">Transfer</option>
+                            <option value="Promotion">Promotion</option>
+                            <option value="Department Change">Department Change</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="mb-4">
+                        <label class="form-label">Remarks (Optional)</label>
+                        <textarea class="form-control" id="remarks" rows="3" 
+                                  placeholder="Add any remarks..."></textarea>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Release Locker
+                        </button>
+                        <a href="/" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedLockerData = null;
+
+// Load assigned lockers
+async function loadLockers() {
+    try {
+        const response = await fetch('/api/lockers/assigned');
+        const lockers = await response.json();
+        
+        const select = document.getElementById('lockerSelect');
+        select.innerHTML = '<option value="">-- Select Locker --</option>';
+        
+        lockers.forEach(locker => {
+            const option = document.createElement('option');
+            option.value = locker.locker_no;
+            option.textContent = `${locker.locker_no} - ${locker.emp_name} (${locker.emp_id})`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        showAlert('Failed to load lockers: ' + error.message, 'danger');
+    }
+}
+
+// Handle locker selection
+document.getElementById('lockerSelect').addEventListener('change', async (e) => {
+    const lockerNo = e.target.value;
+    if (!lockerNo) {
+        document.getElementById('assignmentDetails').style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/locker/${lockerNo}`);
+        const locker = await response.json();
+        
+        selectedLockerData = locker;
+        
+        document.getElementById('empName').textContent = locker.assigned_emp_name;
+        document.getElementById('empId').textContent = locker.assigned_emp_id;
+        document.getElementById('assignedDate').textContent = locker.assigned_date || '-';
+        document.getElementById('keysIssued').textContent = locker.keys_issued;
+        document.getElementById('keysReturned').max = locker.keys_issued;
+        document.getElementById('keysReturned').value = locker.keys_issued;
+        
+        document.getElementById('assignmentDetails').style.display = 'block';
+    } catch (error) {
+        showAlert('Failed to load locker details: ' + error.message, 'danger');
+    }
+});
+
+// Form submission
+document.getElementById('releaseForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const lockerNo = document.getElementById('lockerSelect').value;
+    if (!lockerNo) {
+        showAlert('Please select a locker', 'warning');
+        return;
+    }
+    
+    const reason = document.getElementById('releaseReason').value;
+    if (!reason) {
+        showAlert('Please select a release reason', 'warning');
+        return;
+    }
+    
+    // Confirmation dialog
+    if (!confirm('Are you sure you want to release this locker?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/locker/release', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                locker_no: lockerNo,
+                keys_returned: document.getElementById('keysReturned').value,
+                reason: reason,
+                remarks: document.getElementById('remarks').value
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showAlert(data.message, 'success');
+            setTimeout(() => location.href = '/', 2000);
+        } else {
+            showAlert(data.error || 'Failed to release locker', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+
+// Load lockers on page load
+loadLockers();
+</script>
+{% endblock %}

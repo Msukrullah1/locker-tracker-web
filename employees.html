@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Search - Locker Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <h2 style="color: #4db8ff; margin-bottom: 20px;">
+            <i class="bi bi-search"></i> Employee Search
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" 
+                           placeholder="Search by ID, name, email..." style="font-size: 1.1rem; padding: 10px;">
+                    <button class="btn btn-primary" type="button">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Search Results</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Emp ID</th>
+                                <th>Name</th>
+                                <th>Designation</th>
+                                <th>Department</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTable">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    Start searching to see employees
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lockers Modal -->
+        <div class="modal fade" id="lockersModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" style="background: #253447; border: 1px solid #4db8ff;">
+                    <div class="modal-header" style="border-bottom: 2px solid #4db8ff;">
+                        <h5 class="modal-title" id="modalTitle"></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Locker</th>
+                                        <th>Type</th>
+                                        <th>Floor</th>
+                                        <th>Assigned Date</th>
+                                        <th>Keys</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lockersTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+
+// Search function
+document.getElementById('searchInput').addEventListener('keyup', debounce(searchEmployees, 300));
+document.querySelector('.btn-primary').addEventListener('click', searchEmployees);
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+async function searchEmployees() {
+    const search = document.getElementById('searchInput').value.trim();
+    
+    try {
+        const response = await fetch(`/api/employees/search?q=${encodeURIComponent(search)}`);
+        const employees = await response.json();
+        
+        const table = document.getElementById('employeeTable');
+        table.innerHTML = '';
+        
+        if (employees.length === 0) {
+            table.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No employees found</td></tr>';
+            return;
+        }
+        
+        employees.forEach(emp => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${emp.emp_id}</strong></td>
+                <td>${emp.emp_name}</td>
+                <td>${emp.designation || '-'}</td>
+                <td>${emp.dept_name || '-'}</td>
+                <td>${emp.email || '-'}</td>
+                <td>${emp.phone || '-'}</td>
+                <td>
+                    <span class="badge ${emp.status === 'Active' ? 'badge-success' : 'badge-warning'}">
+                        ${emp.status || 'N/A'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="viewLockers('${emp.emp_id}', '${emp.emp_name}')">
+                        <i class="bi bi-eye"></i> Lockers
+                    </button>
+                </td>
+            `;
+            table.appendChild(row);
+        });
+    } catch (error) {
+        showAlert('Search failed: ' + error.message, 'danger');
+    }
+}
+
+async function viewLockers(empId, empName) {
+    try {
+        const response = await fetch(`/api/employee/${empId}/lockers`);
+        const lockers = await response.json();
+        
+        const table = document.getElementById('lockersTable');
+        table.innerHTML = '';
+        
+        if (lockers.length === 0) {
+            table.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No lockers assigned</td></tr>';
+        } else {
+            lockers.forEach(locker => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${locker.locker_no}</strong></td>
+                    <td>${locker.type_name}</td>
+                    <td>${locker.floor_name}</td>
+                    <td>${locker.assigned_date}</td>
+                    <td>
+                        <span class="badge badge-info">${locker.keys_issued}</span>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+        
+        document.getElementById('modalTitle').textContent = `Lockers - ${empName} (${empId})`;
+        new bootstrap.Modal(document.getElementById('lockersModal')).show();
+    } catch (error) {
+        showAlert('Failed to load lockers: ' + error.message, 'danger');
+    }
+}
+
+// Load employees on page load
+searchEmployees();
+</script>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports - Locker Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <h2 style="color: #4db8ff; margin-bottom: 20px;">
+            <i class="bi bi-graph-up"></i> Reports
+        </h2>
+    </div>
+</div>
+
+<!-- Floor Report Tab -->
+<div class="row">
+    <div class="col-lg-12">
+        <ul class="nav nav-tabs" role="tablist" style="border-bottom: 2px solid #4db8ff;">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#floorReport">
+                    <i class="bi bi-building"></i> Floor Report
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#auditReport">
+                    <i class="bi bi-clipboard-check"></i> Audit Log
+                </a>
+            </li>
+        </ul>
+
+        <!-- Floor Report -->
+        <div class="tab-content">
+            <div id="floorReport" class="tab-pane fade show active">
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Select Floor</label>
+                                <select class="form-select" id="floorSelect">
+                                    <option value="">-- All Floors --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary mt-4" onclick="loadFloorReport()">
+                                    <i class="bi bi-search"></i> Generate Report
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Floor</th>
+                                        <th>Building</th>
+                                        <th>Total</th>
+                                        <th>Assigned</th>
+                                        <th>Available</th>
+                                        <th>Damaged</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="floorTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">Click Generate Report to view data</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="row mt-4">
+                            <div class="col-md-5 offset-md-7">
+                                <div style="background: rgba(77, 184, 255, 0.05); border: 1px solid #4db8ff; 
+                                           border-radius: 5px; padding: 15px;">
+                                    <p><strong style="color: #4db8ff;">Total Lockers:</strong> <span id="totalSum">0</span></p>
+                                    <p><strong style="color: #4db8ff;">Total Assigned:</strong> <span id="assignedSum">0</span></p>
+                                    <p><strong style="color: #4db8ff;">Total Available:</strong> <span id="availableSum">0</span></p>
+                                    <p><strong style="color: #4db8ff;">Utilization:</strong> <span id="utilizationSum">0%</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Log Report -->
+            <div id="auditReport" class="tab-pane fade">
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label">User</label>
+                                <select class="form-select" id="auditUser">
+                                    <option value="">-- All Users --</option>
+                                    <option value="superadmin">superadmin</option>
+                                    <option value="admin01">admin01</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Action</label>
+                                <select class="form-select" id="auditAction">
+                                    <option value="">-- All Actions --</option>
+                                    <option value="LOGIN">LOGIN</option>
+                                    <option value="LOGOUT">LOGOUT</option>
+                                    <option value="ASSIGN_LOCKER">ASSIGN_LOCKER</option>
+                                    <option value="RELEASE_LOCKER">RELEASE_LOCKER</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">From Date</label>
+                                <input type="date" class="form-control" id="auditFromDate">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">To Date</label>
+                                <input type="date" class="form-control" id="auditToDate">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <button class="btn btn-primary" onclick="loadAuditLog()">
+                                    <i class="bi bi-filter"></i> Apply Filters
+                                </button>
+                                <button class="btn btn-secondary" onclick="clearAuditFilters()">
+                                    <i class="bi bi-arrow-clockwise"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>DateTime</th>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Entity</th>
+                                        <th>New Value</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">Click Apply Filters to view audit log</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load floor options
+async function loadFloorOptions() {
+    try {
+        const response = await fetch('/api/reports/floor?floor_code=All');
+        const floors = await response.json();
+        
+        const select = document.getElementById('floorSelect');
+        select.innerHTML = '<option value="">-- All Floors --</option>';
+        
+        floors.forEach(floor => {
+            const option = document.createElement('option');
+            option.value = floor.floor_code;
+            option.textContent = `${floor.floor_code} - ${floor.floor_name}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to load floors:', error);
+    }
+}
+
+// Load floor report
+async function loadFloorReport() {
+    try {
+        const floorCode = document.getElementById('floorSelect').value;
+        const response = await fetch(`/api/reports/floor?floor_code=${floorCode || 'All'}`);
+        const data = await response.json();
+        
+        const table = document.getElementById('floorTable');
+        table.innerHTML = '';
+        
+        let totalLocker = 0, totalAssigned = 0, totalAvailable = 0;
+        
+        data.forEach(floor => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${floor.floor_code} - ${floor.floor_name}</strong></td>
+                <td>${floor.building || '-'}</td>
+                <td>${floor.total || 0}</td>
+                <td>
+                    <span class="badge badge-success">${floor.assigned || 0}</span>
+                </td>
+                <td>
+                    <span class="badge badge-info">${floor.available || 0}</span>
+                </td>
+                <td>
+                    <span class="badge badge-danger">${floor.damaged || 0}</span>
+                </td>
+            `;
+            table.appendChild(row);
+            
+            totalLocker += floor.total || 0;
+            totalAssigned += floor.assigned || 0;
+            totalAvailable += floor.available || 0;
+        });
+        
+        // Update summary
+        document.getElementById('totalSum').textContent = totalLocker;
+        document.getElementById('assignedSum').textContent = totalAssigned;
+        document.getElementById('availableSum').textContent = totalAvailable;
+        
+        const utilization = totalLocker > 0 ? Math.round((totalAssigned / totalLocker) * 100) : 0;
+        document.getElementById('utilizationSum').textContent = utilization + '%';
+    } catch (error) {
+        showAlert('Failed to load report: ' + error.message, 'danger');
+    }
+}
+
+// Load audit log
+async function loadAuditLog() {
+    try {
+        const user = document.getElementById('auditUser').value;
+        const action = document.getElementById('auditAction').value;
+        const fromDate = document.getElementById('auditFromDate').value;
+        const toDate = document.getElementById('auditToDate').value;
+        
+        let url = '/api/reports/audit?';
+        if (user) url += `user_id=${user}&`;
+        if (action) url += `action=${action}&`;
+        if (fromDate) url += `from_date=${fromDate}&`;
+        if (toDate) url += `to_date=${toDate}`;
+        
+        const response = await fetch(url);
+        const logs = await response.json();
+        
+        const table = document.getElementById('auditTable');
+        table.innerHTML = '';
+        
+        if (logs.length === 0) {
+            table.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No records found</td></tr>';
+            return;
+        }
+        
+        logs.forEach(log => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${log.log_datetime}</td>
+                <td>${log.user_id}</td>
+                <td>
+                    <span class="badge badge-info">${log.action}</span>
+                </td>
+                <td>${log.entity_type}</td>
+                <td>${log.new_value || '-'}</td>
+                <td>${log.remarks || '-'}</td>
+            `;
+            table.appendChild(row);
+        });
+    } catch (error) {
+        showAlert('Failed to load audit log: ' + error.message, 'danger');
+    }
+}
+
+// Clear audit filters
+function clearAuditFilters() {
+    document.getElementById('auditUser').value = '';
+    document.getElementById('auditAction').value = '';
+    document.getElementById('auditFromDate').value = '';
+    document.getElementById('auditToDate').value = '';
+    document.getElementById('auditTable').innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Filters cleared</td></tr>';
+}
+
+// Load on page load
+loadFloorOptions();
+</script>
+{% endblock %}
